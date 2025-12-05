@@ -1,10 +1,17 @@
 import { db } from "@/db";
-import { eq } from "drizzle-orm";
-import { trips } from "@/db/schema";
+import { eq, and, sql, count } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
+import {
+  trips,
+  routes,
+  locations,
+  seats,
+  bookingSeats,
+  bookings,
+} from "@/db/schema";
 import type { OriginWithDestinations } from "@/types";
 
 export async function getOriginsWithDestinations() {
-  // Get all routes with their origin and destination locations
   const allRoutes = await db.query.routes.findMany({
     with: {
       originLocation: true,
@@ -12,7 +19,6 @@ export async function getOriginsWithDestinations() {
     },
   });
 
-  // Group by origin
   const originsMap = new Map<number, OriginWithDestinations>();
 
   for (const route of allRoutes) {
@@ -41,62 +47,150 @@ export async function getTripsByRoute(
   toAbbr: string,
   date: string
 ) {
-  // Find the route that matches from and to
-  const tripsData = await db.query.trips.findMany({
-    where: eq(trips.date, date),
-    with: {
-      route: {
-        with: {
-          originLocation: true,
-          destinationLocation: true,
-        },
-      },
-      seats: {
-        with: {
-          bookingSeats: true,
-        },
-      },
-    },
-  });
+  const originLoc = alias(locations, "origin_loc");
+  const destLoc = alias(locations, "destination_loc");
 
-  type TripData = (typeof tripsData)[number];
-  type SeatData = TripData["seats"][number];
-
-  // Filter trips by route origin and destination
-  const filteredTrips = tripsData.filter((trip: TripData) => {
-    return (
-      trip.route.originLocation.abbreviation === fromAbbr &&
-      trip.route.destinationLocation.abbreviation === toAbbr
+  const result = await db
+    .select({
+      id: trips.id,
+      date: trips.date,
+      departureTime: trips.departureTime,
+      arrivalTime: trips.arrivalTime,
+      cost: trips.cost,
+      originId: originLoc.id,
+      originName: originLoc.name,
+      originAbbreviation: originLoc.abbreviation,
+      destinationId: destLoc.id,
+      destinationName: destLoc.name,
+      destinationAbbreviation: destLoc.abbreviation,
+      totalSeats: sql<number>`COUNT(DISTINCT ${seats.id})`.mapWith(Number),
+      bookedSeats:
+        sql<number>`COUNT(DISTINCT CASE WHEN ${bookingSeats.id} IS NOT NULL THEN ${seats.id} END)`.mapWith(
+          Number
+        ),
+    })
+    .from(trips)
+    .innerJoin(routes, eq(trips.routeId, routes.id))
+    .innerJoin(originLoc, eq(routes.originLocationId, originLoc.id))
+    .innerJoin(destLoc, eq(routes.destinationLocationId, destLoc.id))
+    .leftJoin(seats, eq(seats.tripId, trips.id))
+    .leftJoin(bookingSeats, eq(bookingSeats.seatId, seats.id))
+    .where(
+      and(
+        eq(trips.date, date),
+        eq(originLoc.abbreviation, fromAbbr),
+        eq(destLoc.abbreviation, toAbbr)
+      )
+    )
+    .groupBy(
+      trips.id,
+      trips.date,
+      trips.departureTime,
+      trips.arrivalTime,
+      trips.cost,
+      originLoc.id,
+      originLoc.name,
+      originLoc.abbreviation,
+      destLoc.id,
+      destLoc.name,
+      destLoc.abbreviation
     );
-  });
 
-  // Calculate availability for each trip
-  return filteredTrips.map((trip: TripData) => {
-    const totalSeats = trip.seats.length;
-    const bookedSeats = trip.seats.filter((seat: SeatData) => {
-      return seat.bookingSeats.length > 0;
-    }).length;
-    const availableSeats = totalSeats - bookedSeats;
+  return result.map((trip) => ({
+    id: trip.id,
+    date: trip.date,
+    departureTime: trip.departureTime,
+    arrivalTime: trip.arrivalTime,
+    cost: trip.cost,
+    origin: {
+      id: trip.originId,
+      name: trip.originName,
+      abbreviation: trip.originAbbreviation,
+    },
+    destination: {
+      id: trip.destinationId,
+      name: trip.destinationName,
+      abbreviation: trip.destinationAbbreviation,
+    },
+    totalSeats: trip.totalSeats,
+    availableSeats: trip.totalSeats - trip.bookedSeats,
+    bookedSeats: trip.bookedSeats,
+  }));
+}
 
-    return {
-      id: trip.id,
-      date: trip.date,
-      departureTime: trip.departureTime,
-      arrivalTime: trip.arrivalTime,
-      cost: trip.cost,
-      origin: {
-        id: trip.route.originLocation.id,
-        name: trip.route.originLocation.name,
-        abbreviation: trip.route.originLocation.abbreviation,
-      },
-      destination: {
-        id: trip.route.destinationLocation.id,
-        name: trip.route.destinationLocation.name,
-        abbreviation: trip.route.destinationLocation.abbreviation,
-      },
-      totalSeats,
-      availableSeats,
-      bookedSeats,
-    };
-  });
+export async function getTripById(tripId: number) {
+  const originLoc = alias(locations, "origin_loc");
+  const destLoc = alias(locations, "destination_loc");
+
+  // Parallelize trip and seat queries
+  const [tripResult, seatsResult] = await Promise.all([
+    // Get trip details
+    db
+      .select({
+        id: trips.id,
+        date: trips.date,
+        departureTime: trips.departureTime,
+        arrivalTime: trips.arrivalTime,
+        cost: trips.cost,
+        originId: originLoc.id,
+        originName: originLoc.name,
+        originAbbreviation: originLoc.abbreviation,
+        originCity: originLoc.city,
+        originCountry: originLoc.country,
+        destinationId: destLoc.id,
+        destinationName: destLoc.name,
+        destinationAbbreviation: destLoc.abbreviation,
+        destinationCity: destLoc.city,
+        destinationCountry: destLoc.country,
+      })
+      .from(trips)
+      .innerJoin(routes, eq(trips.routeId, routes.id))
+      .innerJoin(originLoc, eq(routes.originLocationId, originLoc.id))
+      .innerJoin(destLoc, eq(routes.destinationLocationId, destLoc.id))
+      .where(eq(trips.id, tripId)),
+
+    // Get individual seat details with availability, sorted by row then column
+    db
+      .select({
+        id: seats.id,
+        seatNumber: seats.seatNumber,
+        isAvailable: sql<boolean>`${bookingSeats.id} IS NULL`.mapWith(Boolean),
+      })
+      .from(seats)
+      .leftJoin(bookingSeats, eq(bookingSeats.seatId, seats.id))
+      .where(eq(seats.tripId, tripId))
+      .orderBy(
+        sql`SUBSTRING(${seats.seatNumber}, 1, 1)`,
+        sql`CAST(SUBSTRING(${seats.seatNumber}, 2) AS INTEGER)`
+      ),
+  ]);
+
+  if (tripResult.length === 0) {
+    return null;
+  }
+
+  const tripInfo = tripResult[0];
+
+  return {
+    id: tripInfo.id,
+    date: tripInfo.date,
+    departureTime: tripInfo.departureTime,
+    arrivalTime: tripInfo.arrivalTime,
+    cost: tripInfo.cost,
+    origin: {
+      id: tripInfo.originId,
+      name: tripInfo.originName,
+      abbreviation: tripInfo.originAbbreviation,
+      city: tripInfo.originCity,
+      country: tripInfo.originCountry,
+    },
+    destination: {
+      id: tripInfo.destinationId,
+      name: tripInfo.destinationName,
+      abbreviation: tripInfo.destinationAbbreviation,
+      city: tripInfo.destinationCity,
+      country: tripInfo.destinationCountry,
+    },
+    seats: seatsResult,
+  };
 }

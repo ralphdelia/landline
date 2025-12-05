@@ -18,6 +18,15 @@ export const tripSearchSchema = z.object({
 
 export type TripSearchFormData = z.infer<typeof tripSearchSchema>;
 
+export const bookingFormSchema = z.object({
+  seats: z.array(z.string()).min(1, "Please select at least one seat"),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Please enter a valid email"),
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+});
+
+export type BookingFormData = z.infer<typeof bookingFormSchema>;
+
 export type TripWithAvailability = Awaited<
   ReturnType<typeof getTripsByRoute>
 >[number];

@@ -1,19 +1,12 @@
-// import { db } from "@/db";
-// import { users } from "@/db/schema";
-import Link from "next/link";
-
 export default async function Home() {
-  // const allUsers = await db.select().from(users);
-
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center font-sans">
-      <main className="bg-background flex min-h-screen w-full max-w-3xl flex-col items-center sm:items-start">
-        <nav className="w-full">
-          <Link className="text-lg font-bold hover:cursor-pointer" href={"/"}>
-            The Landline Company
-          </Link>
-        </nav>
-      </main>
-    </div>
+    <section className="w-full">
+      <h1 className="text-2xl font-bold mb-4">Search for a Trip</h1>
+      <ul className="list-disc list-inside space-y-2">
+        <li>User selects origin, destination, date</li>
+        <li>Requires all fields before showing results</li>
+        <li>Query params: from, to, date</li>
+      </ul>
+    </section>
   );
 }

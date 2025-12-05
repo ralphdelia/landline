@@ -37,8 +37,8 @@ export default function RootLayout({
             </div>
           </nav>
           <div className="flex flex-1 justify-center">
-            <main className="flex w-full max-w-3xl flex-col items-center border-x border-stone-500 bg-stone-200 sm:items-start">
-              <div className="p-2">{children}</div>
+            <main className="flex w-full max-w-3xl flex-col items-center border-x border-stone-500 bg-stone-200">
+              <div className="w-full p-4">{children}</div>
             </main>
           </div>
         </div>

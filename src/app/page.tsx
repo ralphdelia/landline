@@ -1,12 +1,40 @@
-export default async function Home() {
+import { getOriginsWithDestinations, getTripsByRoute } from "@/data";
+import { TripSearchForm } from "@/components/TripSearchForm";
+import { SearchResultsList } from "@/components/SearchResultsList";
+import { tripSearchSchema } from "@/types";
+import { Suspense } from "react";
+
+type Props = {
+  searchParams: Promise<{
+    from?: string;
+    to?: string;
+    date?: string;
+  }>;
+};
+
+export default async function Home({ searchParams }: Props) {
+  const origins = await getOriginsWithDestinations();
+  const params = await searchParams;
+
+  const parsedSearchParams = tripSearchSchema.safeParse(params);
+  let searchResultsPromise;
+
+  if (parsedSearchParams.success) {
+    searchResultsPromise = getTripsByRoute(
+      parsedSearchParams.data.from,
+      parsedSearchParams.data.to,
+      parsedSearchParams.data.date
+    );
+  }
+
   return (
-    <section className="w-full">
-      <h1 className="text-2xl font-bold mb-4">Search for a Trip</h1>
-      <ul className="list-disc list-inside space-y-2">
-        <li>User selects origin, destination, date</li>
-        <li>Requires all fields before showing results</li>
-        <li>Query params: from, to, date</li>
-      </ul>
+    <section className="w-full overflow-hidden">
+      <h1 className="mb-4 text-2xl font-bold">Search for a Trip</h1>
+      <TripSearchForm origins={origins} />
+
+      <Suspense fallback={<div className="mt-8">Loading results...</div>}>
+        <SearchResultsList searchResultPromise={searchResultsPromise} />
+      </Suspense>
     </section>
   );
 }

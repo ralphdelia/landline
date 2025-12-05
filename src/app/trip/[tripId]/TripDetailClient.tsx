@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui";
 import type { getTripById } from "@/data";
 import { notFound } from "next/navigation";
-import { createBooking, type BookingState } from "@/actions";
+import { createBooking } from "@/actions";
 
 type TripDetailClientProps = {
   tripPromise: NonNullable<ReturnType<typeof getTripById>>;
@@ -15,10 +15,9 @@ const COLS_PER_ROW = 4;
 export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
   const trip = use(tripPromise);
 
-  const [state, formAction, isPending] = useActionState<BookingState, FormData>(
-    createBooking,
-    {}
-  );
+  const [state, formAction, isPending] = useActionState(createBooking, {
+    errors: [],
+  });
 
   if (!trip) return notFound();
 
@@ -134,19 +133,18 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                 )}
               </div>
               <div className="mt-0.5 h-4">
-                {"properties" in state &&
-                  state.properties?.seats?.errors?.[0] && (
-                    <p className="text-xs text-red-500">
-                      {state.properties.seats.errors[0]}
-                    </p>
-                  )}
+                {state.properties?.seats?.errors?.[0] && (
+                  <p className="text-xs text-red-500">
+                    {state.properties.seats.errors[0]}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          {"_form" in state && state._form && (
+          {state.errors && state.errors.length > 0 && (
             <div className="mt-4 rounded-md bg-red-50 p-3">
-              <p className="text-sm text-red-600">{state._form[0]}</p>
+              <p className="text-sm text-red-600">{state.errors[0]}</p>
             </div>
           )}
 
@@ -162,18 +160,15 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                 type="text"
                 disabled={isPending}
                 className={`w-full rounded-md border bg-stone-50 px-3 py-2 disabled:opacity-50 ${
-                  "properties" in state && state.properties?.name
-                    ? "border-red-500"
-                    : "border-gray-300"
+                  state.properties?.name ? "border-red-500" : "border-gray-300"
                 }`}
               />
               <div className="mt-0.5 h-4">
-                {"properties" in state &&
-                  state.properties?.name?.errors?.[0] && (
-                    <p className="text-xs text-red-500">
-                      {state.properties.name.errors[0]}
-                    </p>
-                  )}
+                {state.properties?.name?.errors?.[0] && (
+                  <p className="text-xs text-red-500">
+                    {state.properties.name.errors[0]}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -187,18 +182,15 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                 type="email"
                 disabled={isPending}
                 className={`w-full rounded-md border bg-stone-50 px-3 py-2 disabled:opacity-50 ${
-                  "properties" in state && state.properties?.email
-                    ? "border-red-500"
-                    : "border-gray-300"
+                  state.properties?.email ? "border-red-500" : "border-gray-300"
                 }`}
               />
               <div className="mt-0.5 h-4">
-                {"properties" in state &&
-                  state.properties?.email?.errors?.[0] && (
-                    <p className="text-xs text-red-500">
-                      {state.properties.email.errors[0]}
-                    </p>
-                  )}
+                {state.properties?.email?.errors?.[0] && (
+                  <p className="text-xs text-red-500">
+                    {state.properties.email.errors[0]}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -215,18 +207,17 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                 type="date"
                 disabled={isPending}
                 className={`w-full rounded-md border bg-stone-50 px-3 py-2 disabled:opacity-50 ${
-                  "properties" in state && state.properties?.dateOfBirth
+                  state.properties?.dateOfBirth
                     ? "border-red-500"
                     : "border-gray-300"
                 }`}
               />
               <div className="mt-0.5 h-4">
-                {"properties" in state &&
-                  state.properties?.dateOfBirth?.errors?.[0] && (
-                    <p className="text-xs text-red-500">
-                      {state.properties.dateOfBirth.errors[0]}
-                    </p>
-                  )}
+                {state.properties?.dateOfBirth?.errors?.[0] && (
+                  <p className="text-xs text-red-500">
+                    {state.properties.dateOfBirth.errors[0]}
+                  </p>
+                )}
               </div>
             </div>
 

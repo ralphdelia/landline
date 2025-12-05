@@ -1,6 +1,7 @@
 import type { locations } from "@/db/schema";
 import { z } from "zod";
 import type { getTripsByRoute } from "@/data";
+import { createBooking, processPayment } from "@/actions";
 
 export type Location = typeof locations.$inferSelect;
 
@@ -30,3 +31,25 @@ export type BookingFormData = z.infer<typeof bookingFormSchema>;
 export type TripWithAvailability = Awaited<
   ReturnType<typeof getTripsByRoute>
 >[number];
+
+export const paymentFormSchema = z.object({
+  tripId: z.coerce.number().nullish(),
+  bookingId: z.coerce.number().min(1, "Booking ID is required"),
+  cardholderName: z.string().min(1, "Cardholder name is required"),
+  cardNumber: z
+    .string()
+    .regex(/^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$/, "Invalid card number"),
+  expiryDate: z
+    .string()
+    .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Invalid expiry date (MM/YY)"),
+  cvv: z.string().regex(/^\d{3,4}$/, "Invalid CVV"),
+  billingAddress: z.string().min(1, "Billing address is required"),
+  paymentMethodType: z.enum(["credit", "debit"], {
+    message: "Please select a card type",
+  }),
+});
+
+export type PaymentFormData = z.infer<typeof paymentFormSchema>;
+
+export type BookingState = Awaited<ReturnType<typeof createBooking>>;
+export type PaymentState = Awaited<ReturnType<typeof processPayment>>;

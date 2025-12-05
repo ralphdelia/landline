@@ -1,7 +1,15 @@
 import { db } from "@/db";
 import { eq, and, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { trips, routes, locations, seats, bookingSeats } from "@/db/schema";
+import {
+  trips,
+  routes,
+  locations,
+  seats,
+  bookingSeats,
+  bookings,
+  users,
+} from "@/db/schema";
 import type { OriginWithDestinations } from "@/types";
 
 export async function getOriginsWithDestinations() {
@@ -182,5 +190,88 @@ export async function getTripById(tripId: number) {
       country: tripInfo.destinationCountry,
     },
     seats: seatsResult,
+  };
+}
+
+export async function getBookingDetails(tripId: number, bookingId: number) {
+  const originLoc = alias(locations, "origin_loc");
+  const destLoc = alias(locations, "destination_loc");
+
+  const result = await db
+    .select({
+      // Booking info
+      bookingId: bookings.id,
+      bookingStatus: bookings.status,
+      reservedUntil: bookings.reservedUntil,
+      bookingAmount: bookings.amount,
+      // Trip info
+      tripDate: trips.date,
+      departureTime: trips.departureTime,
+      arrivalTime: trips.arrivalTime,
+      tripCost: trips.cost,
+      // Route info
+      originAbbreviation: originLoc.abbreviation,
+      destinationAbbreviation: destLoc.abbreviation,
+      // User info
+      userName: users.name,
+      userEmail: users.email,
+      // Aggregated seats
+      seatNumbers: sql<string[]>`array_agg(${seats.seatNumber} ORDER BY SUBSTRING(${seats.seatNumber}, 1, 1), CAST(SUBSTRING(${seats.seatNumber}, 2) AS INTEGER))`,
+    })
+    .from(bookings)
+    .innerJoin(users, eq(bookings.userId, users.id))
+    .innerJoin(bookingSeats, eq(bookingSeats.bookingId, bookings.id))
+    .innerJoin(seats, eq(bookingSeats.seatId, seats.id))
+    .innerJoin(trips, eq(seats.tripId, trips.id))
+    .innerJoin(routes, eq(trips.routeId, routes.id))
+    .innerJoin(originLoc, eq(routes.originLocationId, originLoc.id))
+    .innerJoin(destLoc, eq(routes.destinationLocationId, destLoc.id))
+    .where(and(eq(bookings.id, bookingId), eq(trips.id, tripId)))
+    .groupBy(
+      bookings.id,
+      bookings.status,
+      bookings.reservedUntil,
+      bookings.amount,
+      trips.date,
+      trips.departureTime,
+      trips.arrivalTime,
+      trips.cost,
+      originLoc.abbreviation,
+      destLoc.abbreviation,
+      users.name,
+      users.email
+    )
+    .limit(1);
+
+  if (result.length === 0) {
+    return null;
+  }
+
+  const booking = result[0];
+
+  return {
+    booking: {
+      id: booking.bookingId,
+      status: booking.bookingStatus,
+      reservedUntil: booking.reservedUntil,
+      amount: booking.bookingAmount,
+    },
+    trip: {
+      date: booking.tripDate,
+      departureTime: booking.departureTime,
+      arrivalTime: booking.arrivalTime,
+      cost: booking.tripCost,
+      origin: {
+        abbreviation: booking.originAbbreviation,
+      },
+      destination: {
+        abbreviation: booking.destinationAbbreviation,
+      },
+    },
+    seats: booking.seatNumbers,
+    user: {
+      name: booking.userName,
+      email: booking.userEmail,
+    },
   };
 }

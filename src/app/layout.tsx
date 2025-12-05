@@ -37,10 +37,17 @@ export default function RootLayout({
             </div>
           </nav>
           <div className="flex flex-1 justify-center">
-            <main className="flex w-full max-w-3xl flex-col items-center border-x border-stone-500 bg-stone-200">
+            <main className="flex w-full max-w-3xl flex-col items-center border-x border-stone-500 bg-stone-200 pb-10">
               <div className="w-full p-4">{children}</div>
             </main>
           </div>
+          <footer className="flex w-full justify-center border-t border-stone-500">
+            <div className="w-full max-w-3xl border-x border-stone-500 p-2">
+              <p className="text-sm text-stone-600">
+                © {new Date().getFullYear()} The Landline Company
+              </p>
+            </div>
+          </footer>
         </div>
       </body>
     </html>

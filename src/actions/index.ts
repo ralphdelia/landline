@@ -2,38 +2,21 @@
 
 import { db } from "@/db";
 import { users, bookings, bookingSeats, seats, trips } from "@/db/schema";
-import { bookingFormSchema } from "@/types";
+import { bookingFormSchema, paymentFormSchema } from "@/types";
 import { eq, and, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { generateConfirmationNumber } from "@/app/utils";
 
-export type BookingState =
-  | {
-      errors: string[];
-      properties?: {
-        seats?: {
-          errors: string[];
-        };
-        name?: {
-          errors: string[];
-        };
-        email?: {
-          errors: string[];
-        };
-        dateOfBirth?: {
-          errors: string[];
-        };
-      };
-    }
-  | {
-      _form: string[];
-    }
-  | Record<string, never>;
+type FormActionState = {
+  errors: string[];
+  properties?: Record<string, { errors: string[] }>;
+};
 
 export async function createBooking(
-  _prevState: BookingState,
+  _prevState: FormActionState,
   formData: FormData
-): Promise<BookingState> {
+) {
   const rawData = {
     seats: formData.getAll("seats") as string[],
     name: formData.get("name") as string,
@@ -55,9 +38,10 @@ export async function createBooking(
 
   const validatedData = validation.data;
 
+  let booking;
   try {
     // Execute transaction
-    const booking = await db.transaction(async (tx) => {
+    booking = await db.transaction(async (tx) => {
       // 1. Check if user exists by email, if not create one
       let user = await tx.query.users.findFirst({
         where: eq(users.email, validatedData.email),
@@ -134,15 +118,109 @@ export async function createBooking(
 
       return newBooking;
     });
-
-    // Redirect to payment page on success
-    redirect(`/trip/${tripIdNum}/payment?bookingId=${booking.id}`);
   } catch (error) {
     console.error("Booking error:", error);
     return {
-      _form: [
+      errors: [
         error instanceof Error ? error.message : "Failed to create booking",
       ],
     };
   }
+
+  // Redirect to payment page on success
+  redirect(`/trip/${tripIdNum}/payment?bookingId=${booking.id}`);
+}
+
+export async function processPayment(
+  _prevState: FormActionState,
+  formData: FormData
+) {
+  const validation = paymentFormSchema.safeParse({
+    bookingId: formData.get("bookingId"),
+    cardholderName: formData.get("cardholderName") as string,
+    cardNumber: formData.get("cardNumber") as string,
+    expiryDate: formData.get("expiryDate") as string,
+    cvv: formData.get("cvv") as string,
+    billingAddress: formData.get("billingAddress") as string,
+    paymentMethodType: formData.get("paymentMethodType") as string,
+    tripId: formData.get("tripId"),
+  });
+
+  if (!validation.success) {
+    return z.treeifyError(validation.error);
+  }
+
+  const validatedData = validation.data;
+
+  if (!validatedData.tripId) {
+    return {
+      errors: ["Invalid trip ID"],
+    };
+  }
+
+  let result;
+  try {
+    result = await db.transaction(async (tx) => {
+      const booking = await tx.query.bookings.findFirst({
+        where: eq(bookings.id, validatedData.bookingId),
+        with: {
+          user: true,
+        },
+      });
+
+      if (!booking) {
+        throw new Error("Booking not found");
+      }
+
+      if (booking.status === "booked") {
+        throw new Error("Booking has already been purchased");
+      }
+
+      if (booking.status !== "reserved") {
+        throw new Error("Booking is not in reserved status");
+      }
+
+      if (booking.reservedUntil && new Date() > booking.reservedUntil) {
+        throw new Error("Reservation has expired");
+      }
+
+      {
+        /* Process payment */
+      }
+
+      const confirmationNumber = generateConfirmationNumber();
+
+      await tx
+        .update(bookings)
+        .set({
+          status: "booked",
+          confirmationNumber,
+          reservedUntil: null,
+        })
+        .where(eq(bookings.id, validatedData.bookingId));
+
+      const last4 = validatedData.cardNumber.replace(/\s/g, "").slice(-4);
+      await tx
+        .update(users)
+        .set({
+          billingAddress: validatedData.billingAddress,
+          paymentMethodType: validatedData.paymentMethodType,
+          paymentMethodLast4: last4,
+        })
+        .where(eq(users.id, booking.userId));
+
+      return { confirmationNumber, tripId: validatedData.tripId };
+    });
+  } catch (error) {
+    console.error("Payment error:", error);
+    return {
+      errors: [
+        error instanceof Error ? error.message : "Failed to process payment",
+      ],
+    };
+  }
+
+  redirect(
+    `/trip/${result.tripId}/checkout?confirmation=${result.confirmationNumber}`
+  );
 }

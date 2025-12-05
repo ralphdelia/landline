@@ -220,7 +220,5 @@ export async function processPayment(
     };
   }
 
-  redirect(
-    `/trip/${result.tripId}/checkout?confirmation=${result.confirmationNumber}`
-  );
+  redirect(`/confirmation/${result.confirmationNumber}`);
 }

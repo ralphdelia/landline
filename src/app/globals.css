@@ -1,22 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: oklch(96.9% 0.001 286.375); /* stone-100 */
+  --foreground: oklch(25% 0.015 285.938); /* stone-900 */
+  --muted: oklch(95.1% 0.004 286.032); /* stone-200 */
+  --muted-foreground: oklch(44.6% 0.009 285.938); /* stone-600 */
+  --accent: oklch(89.9% 0.006 286.375); /* stone-300 */
+  --border: oklch(83.1% 0.008 286.375); /* stone-400 */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

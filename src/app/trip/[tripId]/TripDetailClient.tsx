@@ -1,20 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import { bookingFormSchema, type BookingFormData } from "@/types";
 import { Button } from "@/components/ui";
 import type { getTripById } from "@/data";
+import { notFound } from "next/navigation";
 
 type TripDetailClientProps = {
-  trip: NonNullable<Awaited<ReturnType<typeof getTripById>>>;
+  tripPromise: NonNullable<ReturnType<typeof getTripById>>;
 };
+const COLS_PER_ROW = 4;
 
-export function TripDetailClient({ trip }: TripDetailClientProps) {
+export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
+  const trip = use(tripPromise);
   const [errors, setErrors] = useState<
     Partial<Record<keyof BookingFormData, string>>
   >({});
 
-  const COLS_PER_ROW = 4;
+  if (!trip) return notFound();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

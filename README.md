@@ -14,17 +14,37 @@ pnpm install
 pnpm db:up
 ```
 
-3. Run the development server:
+3. Run database migrations:
+```bash
+pnpm db:migrate
+```
+
+4. Seed the database with initial data:
+```bash
+pnpm db:seed
+```
+
+5. Run the development server:
 ```bash
 pnpm dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+6. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 When you're done developing, you can stop the database with:
 ```bash
 pnpm db:down
 ```
+
+### Database Commands
+
+- `pnpm db:up` - Start the PostgreSQL database
+- `pnpm db:down` - Stop the PostgreSQL database
+- `pnpm db:generate` - Generate migration files from schema changes
+- `pnpm db:migrate` - Run pending migrations
+- `pnpm db:seed` - Seed the database with initial data
+- `pnpm db:reset` - Reset the database (clear all data)
+- `pnpm db:studio` - Open Drizzle Studio for database management
 
 
 ## locations

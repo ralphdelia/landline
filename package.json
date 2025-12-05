@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "echo '⚠️  Warning: Use db:generate and db:migrate for safety. Direct push bypasses migration history.'",
-    "db:reset": "tsx src/db/reset.ts",
+    "db:reset": "tsx src/scripts/reset.ts",
+    "db:seed": "tsx src/scripts/seed.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

@@ -1,12 +1,7 @@
-import Image from "next/image";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 
-// Force dynamic rendering - don't prerender at build time
-export const dynamic = "force-dynamic";
-
 export default async function Home() {
-  // Query all users from the database
   const allUsers = await db.select().from(users);
 
   return (

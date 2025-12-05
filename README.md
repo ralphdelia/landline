@@ -199,23 +199,6 @@ erDiagram
 - Removes bookings in reserved status older than one hour
 - Resets them to open
 
-### thoughts
-2 
-- API Structure
-	Show structure
-	Talk about having the fewest pages possible, search -> directly to entering info => payment info. A user will start submitting info before they realize they are in the flow.
-- How does it submit bookings
-- How we fetch search data
-	using a form that controls the query params 
-3 Concurrence 
-Selecting seats at the same time you enter basic user info allows you to connect a booking with reserved status to a specific seat. 
-
-should select seats and enter details in order to connect a user to a reserved seat
-- Need to associate a user with a seat for a reserved status so that other people cant use my reserved seat
-- We only have to search Booking to remove it from the cron
-Cron 
-- a way to remove reserved bookings
-- schedules and api route to be hit configurable once every hour	
 
 ## SEED DATA
 seats

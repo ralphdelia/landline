@@ -27,59 +27,58 @@ pnpm db:down
 ```
 
 
-## locations
+### locations
 **Fields**
 - id
 - name
 - abbreviation
 - city
 - country
-**Relationships**
+#### Relationships
 - **1:M with routes (as origin)**  
     One location can be the origin for many routes.
 - **1:M with routes (as destination)**  
     One location can be the destination for many routes.
----
-## routes
+
+### routes
 **Fields**
 - id
 - origin_location_id
 - destination_location_id
 
-**Relationships**
+#### Relationships
 - **M:1 with locations (origin)**  
     Each route has one origin location.
 - **M:1 with locations (destination)**  
     Each route has one destination location.
 - **1:M with trips**  
     One route can have many scheduled trips.
----
-## trips
+
+### trips
 **Fields**
 - id
 - route_id
 - date
 - departure_time
 - arrival_time
-**Relationships**
+#### Relationships
 - **M:1 with routes**  
     Each trip belongs to one route.
 - **1:M with seats**  
     One trip contains many seats.
----
-## seats
+
+### seats
 **Fields**
 - id
 - trip_id
 - seat_number
-**Relationships**
+#### Relationships
 - **M:1 with trips**  
     Each seat belongs to one trip.
 - **1:M or M:M with bookings (depending on model)**  
     Commonly: one seat can appear in multiple bookings only across different trips; for a given trip, one seat has at most one booking.
 
----
-## bookings
+### bookings
 **Fields**
 - id
 - confrimation_number
@@ -89,15 +88,14 @@ pnpm db:down
 - reserved_until
 - amount, 
 - created_at
-**Relationships**
+#### Relationships
 - **M:1 with seats**  
     A booking reserves one specific seat.
 - **M:1 with users**  
     A booking is made by one user.
 (If you want multi-passenger bookings, you’d add linking tables, but this reflects your original model.)
 
----
-## users
+### users
 **Fields**
 - id
 - name
@@ -105,7 +103,7 @@ pnpm db:down
 - date of birth
 - phone
 - address
-**Relationships**
+#### Relationships
 - **1:M with bookings**  
     A user can have many bookings.
 

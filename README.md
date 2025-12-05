@@ -58,7 +58,7 @@ pnpm db:down
 
 ## DB Schema
 
-##### locations - a table to store location information
+#### locations - a table to store location information
 
 relations
 
@@ -67,7 +67,7 @@ relations
 - **1:M with routes (as destination)**  
   One location can be the destination for many routes.
 
-##### routes - a table to store route information
+#### routes - a table to store route information
 
 relations
 
@@ -78,7 +78,7 @@ relations
 - **1:M with trips**  
   One route can have many scheduled trips.
 
-##### trips - a table to store trip information
+#### trips - a table to store trip information
 
 relations
 
@@ -87,7 +87,7 @@ relations
 - **1:M with seats**  
   One trip contains many seats.
 
-##### seats - a table to store seat information
+#### seats - a table to store seat information
 
 relations
 
@@ -96,7 +96,7 @@ relations
 - **M:M with bookings via booking_seats**  
   Each seat can be linked to multiple bookings over different trips, but for a given trip, a seat can only be reserved once.
 
-##### bookings - a table to store booking information
+#### bookings - a table to store booking information
 
 relations
 
@@ -105,7 +105,7 @@ relations
 - **M:M with seats via booking_seats**  
   A booking can hold one or multiple seats through the join table.
 
-##### booking_seats - a join table for bookings and seats
+#### booking_seats - a join table for bookings and seats
 
 relations
 
@@ -116,7 +116,7 @@ relations
 - **Unique constraint**  
   Ensures a seat is only booked once per trip while allowing multiple seats per booking.
 
-##### users - a table to store user and billing info
+#### users - a table to store user and billing info
 
 relations
 

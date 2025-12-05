@@ -1,4 +1,18 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Table of Contents
+
+- [Local Dev](#local-dev)
+- [DB Schema](#db-schema)
+  - [locations](#locations---a-table-to-store-location-information)
+  - [routes](#routes---a-table-to-store-route-information)
+  - [trips](#trips---a-table-to-store-trip-information)
+  - [seats](#seats---a-table-to-store-seat-information)
+  - [bookings](#bookings---a-table-to-store-booking-information)
+  - [booking_seats](#booking_seats---a-join-table-for-bookings-and-seats)
+  - [users](#users---a-table-to-store-user-and-billing-info)
+- [ERD](#erd)
+- [Routes](#routes)
+  - [Application Routes](#application-routes)
+  - [API Routes](#api-routes)
 
 ## Local Dev
 
@@ -42,118 +56,74 @@ When you're done developing, you can stop the database with:
 pnpm db:down
 ```
 
-### Database Commands
+## DB Schema
 
-- `pnpm db:up` - Start the PostgreSQL database
-- `pnpm db:down` - Stop the PostgreSQL database
-- `pnpm db:generate` - Generate migration files from schema changes
-- `pnpm db:migrate` - Run pending migrations
-- `pnpm db:seed` - Seed the database with initial data
-- `pnpm db:reset` - Reset the database (clear all data)
-- `pnpm db:studio` - Open Drizzle Studio for database management
+##### locations - a table to store location information
 
-## locations
-**Fields**
-- id
-- name
-- abbreviation
-- city
-- country
+relations
 
-#### Relationships
 - **1:M with routes (as origin)**  
-   One location can be the origin for many routes.
+  One location can be the origin for many routes.
 - **1:M with routes (as destination)**  
-   One location can be the destination for many routes.
+  One location can be the destination for many routes.
 
-## routes
-**Fields**
-- id
-- origin_location_id
-- destination_location_id
+##### routes - a table to store route information
 
-#### Relationships
+relations
+
 - **M:1 with locations (origin)**  
-   Each route has one origin location.
+  Each route has one origin location.
 - **M:1 with locations (destination)**  
-   Each route has one destination location.
+  Each route has one destination location.
 - **1:M with trips**  
-   One route can have many scheduled trips.
+  One route can have many scheduled trips.
 
-## trips
-**Fields**
-- id
-- route_id
-- cost
-- date
-- departure_time
-- arrival_time
+##### trips - a table to store trip information
 
-#### Relationships
+relations
+
 - **M:1 with routes**  
-   Each trip belongs to one route.
+  Each trip belongs to one route.
 - **1:M with seats**  
-   One trip contains many seats.
+  One trip contains many seats.
 
-## seats
-**Fields**
-- id
-- trip_id
-- seat_number
+##### seats - a table to store seat information
 
-#### Relationships
+relations
+
 - **M:1 with trips**  
-   Each seat belongs to one trip.
+  Each seat belongs to one trip.
 - **M:M with bookings via booking_seats**  
-   Each seat can be linked to multiple bookings over different trips, but for a given trip, a seat can only be reserved once.
+  Each seat can be linked to multiple bookings over different trips, but for a given trip, a seat can only be reserved once.
 
-## bookings
-**Fields**
-- id
-- confirmation_number
-- user_id
-- status (reserved, booked, canceled)
-- reserved_until
-- amount
-- created_at
+##### bookings - a table to store booking information
 
-#### Relationships
+relations
+
 - **M:1 with users**  
-   A booking is made by one user.
+  A booking is made by one user.
 - **M:M with seats via booking_seats**  
-   A booking can hold one or multiple seats through the join table.
+  A booking can hold one or multiple seats through the join table.
 
-## booking_seats
-**Fields**
-- id
-- booking_id
-- seat_id
-- created_at
+##### booking_seats - a join table for bookings and seats
 
-#### Relationships
+relations
+
 - **M:1 with bookings**  
-   Each row links one seat to one booking.
+  Each row links one seat to one booking.
 - **M:1 with seats**  
-   Each row references a single seat.
+  Each row references a single seat.
 - **Unique constraint**  
-   Ensures a seat is only booked once per trip while allowing multiple seats per booking.
+  Ensures a seat is only booked once per trip while allowing multiple seats per booking.
 
-## users
-**Fields**
-- id
-- name
-- email
-- date of birth
-- phone
-- address
-- billing_address
-- payment_method_type (credit, debit, etc.)
-- payment_method_last4
-- created_at
+##### users - a table to store user and billing info
 
-#### Relationships
+relations
+
 - **1:M with bookings**  
-   A user can have many bookings.
+  A user can have many bookings.
+
+## ERD
 
 ```mermaid
 erDiagram
@@ -232,14 +202,18 @@ erDiagram
 
 ```
 
+## Routes
+
 #### Application Routes
 
 `/` – Root search page
+
 - User selects origin, destination, date
-- Requires all fields before showing results  
+- Requires all fields before showing results
 - **Query params:** `from`, `to`, `date`
 
 `/trip/[tripId]` – Trip detail page
+
 - Shows seat layout and availability
 - User selects seats and enters passenger information (name, email, date of birth)
 - Submitting the form creates a user and a reserved booking, then redirects to payment
@@ -252,14 +226,17 @@ erDiagram
 - **Query params:** `bookingId`
 
 `/confirmation/[confirmationNumber]` – Confirmation page
+
 - Shown after successful payment
 - Displays booking confirmation with confirmation number
 
 `*` – Not found
+
 - Fallback for unmatched routes
 
 #### API Routes
 
 `api/cron/cleanup-bookings` – Clear expired reservations
+
 - Removes bookings in reserved status older than half an hour
 - Resets them to open

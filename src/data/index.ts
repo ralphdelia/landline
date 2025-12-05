@@ -1,14 +1,7 @@
 import { db } from "@/db";
-import { eq, and, sql, count } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import {
-  trips,
-  routes,
-  locations,
-  seats,
-  bookingSeats,
-  bookings,
-} from "@/db/schema";
+import { trips, routes, locations, seats, bookingSeats } from "@/db/schema";
 import type { OriginWithDestinations } from "@/types";
 
 export async function getOriginsWithDestinations() {
@@ -122,9 +115,7 @@ export async function getTripById(tripId: number) {
   const originLoc = alias(locations, "origin_loc");
   const destLoc = alias(locations, "destination_loc");
 
-  // Parallelize trip and seat queries
   const [tripResult, seatsResult] = await Promise.all([
-    // Get trip details
     db
       .select({
         id: trips.id,
@@ -149,7 +140,6 @@ export async function getTripById(tripId: number) {
       .innerJoin(destLoc, eq(routes.destinationLocationId, destLoc.id))
       .where(eq(trips.id, tripId)),
 
-    // Get individual seat details with availability, sorted by row then column
     db
       .select({
         id: seats.id,

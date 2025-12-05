@@ -46,9 +46,10 @@ export default async function PaymentPage({
       )}
 
       {/* Trip Info Section */}
-      <section className="mb-6 w-full rounded-lg border border-stone-200 bg-stone-50 p-4">
-        <h2 className="mb-3 text-lg font-semibold">Trip Information</h2>
-
+      <h2 className="mb-3 w-full text-left text-lg font-medium">
+        Trip Information
+      </h2>
+      <section className="mb-6 w-lg rounded-lg border border-stone-200 bg-stone-50 p-4">
         <div className="mb-3 flex items-center justify-between">
           <div className="text-lg font-semibold">
             {trip.origin.abbreviation} → {trip.destination.abbreviation}
@@ -81,8 +82,10 @@ export default async function PaymentPage({
       </section>
 
       {/* User Info Section */}
-      <section className="mb-6 w-full rounded-lg border border-stone-200 bg-stone-50 p-4">
-        <h2 className="mb-3 text-lg font-semibold">Passenger Information</h2>
+      <h2 className="mb-3 w-full text-left text-lg font-medium">
+        Passenger Information
+      </h2>
+      <section className="mb-6 w-lg rounded-lg border border-stone-200 bg-stone-50 p-4">
         <div className="space-y-2 text-sm">
           <div>
             <span className="font-medium">Name:</span> {user.name}

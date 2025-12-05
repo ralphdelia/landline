@@ -23,7 +23,7 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
 
   return (
     <div className="">
-      <h1 className="mb-4 text-2xl font-medium">Trip Detail</h1>
+      <h1 className="mb-4 text-2xl font-medium">Trip Details</h1>
 
       {/* Trip Info */}
       <section className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -48,7 +48,7 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
           <input type="hidden" name="tripId" value={trip.id} />
           <h3 className="mb-4 text-xl font-medium">Seat Selection</h3>
           <div className="flex justify-center">
-            <div className="w-sm">
+            <div className="w-lg">
               <div className="grid grid-cols-[auto_auto_1.5rem_auto_auto] items-center gap-x-4 gap-y-2 font-mono">
                 {/* Rows with seats - chunk seats into rows of 4 */}
                 {Array.from(
@@ -149,7 +149,7 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
           )}
 
           <h3 className="mt-6 text-xl font-medium">User Info</h3>
-          <div className="mt-3 mr-auto ml-auto flex w-md flex-col gap-3">
+          <div className="mt-3 mr-auto ml-auto flex w-lg flex-col gap-3">
             <div className="w-full">
               <label htmlFor="name" className="mb-1 block text-sm font-medium">
                 Name

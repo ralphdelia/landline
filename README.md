@@ -27,7 +27,7 @@ pnpm db:down
 ```
 
 
-### locations
+## locations
 **Fields**
 - id
 - name
@@ -40,7 +40,7 @@ pnpm db:down
 - **1:M with routes (as destination)**  
     One location can be the destination for many routes.
 
-### routes
+## routes
 **Fields**
 - id
 - origin_location_id
@@ -54,7 +54,7 @@ pnpm db:down
 - **1:M with trips**  
     One route can have many scheduled trips.
 
-### trips
+## trips
 **Fields**
 - id
 - route_id
@@ -67,7 +67,7 @@ pnpm db:down
 - **1:M with seats**  
     One trip contains many seats.
 
-### seats
+## seats
 **Fields**
 - id
 - trip_id
@@ -78,7 +78,7 @@ pnpm db:down
 - **1:M or M:M with bookings (depending on model)**  
     Commonly: one seat can appear in multiple bookings only across different trips; for a given trip, one seat has at most one booking.
 
-### bookings
+## bookings
 **Fields**
 - id
 - confrimation_number
@@ -95,7 +95,7 @@ pnpm db:down
     A booking is made by one user.
 (If you want multi-passenger bookings, you’d add linking tables, but this reflects your original model.)
 
-### users
+## users
 **Fields**
 - id
 - name

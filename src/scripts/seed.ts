@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { db } from "../db";
 import { locations, routes, trips, seats } from "../db/schema";
 
@@ -5,6 +6,15 @@ async function seed() {
   console.log("🌱 Seeding database...");
 
   try {
+    // Check if database is already seeded
+    const existingLocations = await db.select().from(locations).limit(1);
+    if (existingLocations.length > 0) {
+      console.log(
+        "⚠️  Database already contains data. Please run 'pnpm db:reset' first if you want to re-seed."
+      );
+      return;
+    }
+
     // Seed locations
     console.log("📍 Seeding locations...");
     const locationData = [
@@ -150,7 +160,15 @@ async function seed() {
       }
     }
 
-    const insertedTrips = await db.insert(trips).values(tripData).returning();
+    // Insert trips in batches to avoid parameter limit
+    const tripBatchSize = 500;
+    const insertedTrips = [];
+    for (let i = 0; i < tripData.length; i += tripBatchSize) {
+      const batch = tripData.slice(i, i + tripBatchSize);
+      const batchResult = await db.insert(trips).values(batch).returning();
+      insertedTrips.push(...batchResult);
+      console.log(`  ✓ Seeded ${insertedTrips.length} / ${tripData.length} trips`);
+    }
     console.log(`✓ Seeded ${insertedTrips.length} trips`);
 
     // Seed seats

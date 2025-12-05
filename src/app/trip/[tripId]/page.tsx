@@ -18,7 +18,7 @@ export default async function TripDetailPage({
 
   return (
     <Suspense fallback={<div>Loading trip details...</div>}>
-      <TripDetailClient tripPromise={tripPromsise} />;
+      <TripDetailClient tripPromise={tripPromsise} />
     </Suspense>
   );
 }

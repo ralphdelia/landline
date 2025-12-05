@@ -1,10 +1,11 @@
 "use client";
 
-import React, { use, useState } from "react";
-import { bookingFormSchema, type BookingFormData } from "@/types";
+import React, { use } from "react";
+import { useActionState } from "react";
 import { Button } from "@/components/ui";
 import type { getTripById } from "@/data";
 import { notFound } from "next/navigation";
+import { createBooking, type BookingState } from "@/actions";
 
 type TripDetailClientProps = {
   tripPromise: NonNullable<ReturnType<typeof getTripById>>;
@@ -13,39 +14,13 @@ const COLS_PER_ROW = 4;
 
 export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
   const trip = use(tripPromise);
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof BookingFormData, string>>
-  >({});
+
+  const [state, formAction, isPending] = useActionState<BookingState, FormData>(
+    createBooking,
+    {}
+  );
 
   if (!trip) return notFound();
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const formData = new FormData(e.currentTarget);
-
-    const result = bookingFormSchema.safeParse({
-      seats: formData.getAll("seats") as string[],
-      name: formData.get("name") as string,
-      email: formData.get("email") as string,
-      dateOfBirth: formData.get("dateOfBirth") as string,
-    });
-
-    if (!result.success) {
-      const fieldErrors: Partial<Record<keyof BookingFormData, string>> = {};
-      result.error.issues.forEach((err) => {
-        const field = err.path[0] as keyof BookingFormData;
-        fieldErrors[field] = err.message;
-      });
-      setErrors(fieldErrors);
-      return;
-    }
-
-    setErrors({});
-
-    // TODO: Navigate to checkout or process booking
-    console.log("Booking data:", result.data);
-  };
 
   return (
     <div className="">
@@ -70,11 +45,12 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
       </section>
 
       <section className="mb-25">
-        <form onSubmit={handleSubmit}>
+        <form action={formAction}>
+          <input type="hidden" name="tripId" value={trip.id} />
           <h3 className="mb-4 text-xl font-medium">Seat Selection</h3>
           <div className="flex justify-center">
             <div className="w-sm">
-              <div className="grid grid-cols-[auto_auto_1.5rem_auto_auto] items-center gap-x-4 gap-y-2">
+              <div className="grid grid-cols-[auto_auto_1.5rem_auto_auto] items-center gap-x-4 gap-y-2 font-mono">
                 {/* Rows with seats - chunk seats into rows of 4 */}
                 {Array.from(
                   { length: Math.ceil(trip.seats.length / COLS_PER_ROW) },
@@ -93,7 +69,7 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                               type="checkbox"
                               name="seats"
                               value={rowSeats[0].seatNumber}
-                              disabled={!rowSeats[0].isAvailable}
+                              disabled={!rowSeats[0].isAvailable || isPending}
                               className="h-5 w-5 cursor-pointer accent-stone-600 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                             <span className="text-sm">
@@ -109,7 +85,7 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                               type="checkbox"
                               name="seats"
                               value={rowSeats[1].seatNumber}
-                              disabled={!rowSeats[1].isAvailable}
+                              disabled={!rowSeats[1].isAvailable || isPending}
                               className="h-5 w-5 cursor-pointer accent-stone-600 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                             <span className="text-sm">
@@ -128,7 +104,7 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                               type="checkbox"
                               name="seats"
                               value={rowSeats[2].seatNumber}
-                              disabled={!rowSeats[2].isAvailable}
+                              disabled={!rowSeats[2].isAvailable || isPending}
                               className="h-5 w-5 cursor-pointer accent-stone-600 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                             <span className="text-sm">
@@ -144,7 +120,7 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                               type="checkbox"
                               name="seats"
                               value={rowSeats[3].seatNumber}
-                              disabled={!rowSeats[3].isAvailable}
+                              disabled={!rowSeats[3].isAvailable || isPending}
                               className="h-5 w-5 cursor-pointer accent-stone-600 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                             <span className="text-sm">
@@ -158,12 +134,21 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                 )}
               </div>
               <div className="mt-0.5 h-4">
-                {errors.seats && (
-                  <p className="text-xs text-red-500">{errors.seats}</p>
-                )}
+                {"properties" in state &&
+                  state.properties?.seats?.errors?.[0] && (
+                    <p className="text-xs text-red-500">
+                      {state.properties.seats.errors[0]}
+                    </p>
+                  )}
               </div>
             </div>
           </div>
+
+          {"_form" in state && state._form && (
+            <div className="mt-4 rounded-md bg-red-50 p-3">
+              <p className="text-sm text-red-600">{state._form[0]}</p>
+            </div>
+          )}
 
           <h3 className="mt-6 text-xl font-medium">User Info</h3>
           <div className="mt-3 mr-auto ml-auto flex w-md flex-col gap-3">
@@ -175,14 +160,20 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                 id="name"
                 name="name"
                 type="text"
-                className={`w-full rounded-md border bg-stone-50 px-3 py-2 ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                disabled={isPending}
+                className={`w-full rounded-md border bg-stone-50 px-3 py-2 disabled:opacity-50 ${
+                  "properties" in state && state.properties?.name
+                    ? "border-red-500"
+                    : "border-gray-300"
                 }`}
               />
               <div className="mt-0.5 h-4">
-                {errors.name && (
-                  <p className="text-xs text-red-500">{errors.name}</p>
-                )}
+                {"properties" in state &&
+                  state.properties?.name?.errors?.[0] && (
+                    <p className="text-xs text-red-500">
+                      {state.properties.name.errors[0]}
+                    </p>
+                  )}
               </div>
             </div>
 
@@ -194,14 +185,20 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                 id="email"
                 name="email"
                 type="email"
-                className={`w-full rounded-md border bg-stone-50 px-3 py-2 ${
-                  errors.email ? "border-red-500" : "border-gray-300"
+                disabled={isPending}
+                className={`w-full rounded-md border bg-stone-50 px-3 py-2 disabled:opacity-50 ${
+                  "properties" in state && state.properties?.email
+                    ? "border-red-500"
+                    : "border-gray-300"
                 }`}
               />
               <div className="mt-0.5 h-4">
-                {errors.email && (
-                  <p className="text-xs text-red-500">{errors.email}</p>
-                )}
+                {"properties" in state &&
+                  state.properties?.email?.errors?.[0] && (
+                    <p className="text-xs text-red-500">
+                      {state.properties.email.errors[0]}
+                    </p>
+                  )}
               </div>
             </div>
 
@@ -216,19 +213,25 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                 id="dateOfBirth"
                 name="dateOfBirth"
                 type="date"
-                className={`w-full rounded-md border bg-stone-50 px-3 py-2 ${
-                  errors.dateOfBirth ? "border-red-500" : "border-gray-300"
+                disabled={isPending}
+                className={`w-full rounded-md border bg-stone-50 px-3 py-2 disabled:opacity-50 ${
+                  "properties" in state && state.properties?.dateOfBirth
+                    ? "border-red-500"
+                    : "border-gray-300"
                 }`}
               />
               <div className="mt-0.5 h-4">
-                {errors.dateOfBirth && (
-                  <p className="text-xs text-red-500">{errors.dateOfBirth}</p>
-                )}
+                {"properties" in state &&
+                  state.properties?.dateOfBirth?.errors?.[0] && (
+                    <p className="text-xs text-red-500">
+                      {state.properties.dateOfBirth.errors[0]}
+                    </p>
+                  )}
               </div>
             </div>
 
-            <Button type="submit" className="mt-3">
-              Continue to Checkout
+            <Button type="submit" className="mt-3" disabled={isPending}>
+              {isPending ? "Processing..." : "Continue to Checkout"}
             </Button>
           </div>
         </form>

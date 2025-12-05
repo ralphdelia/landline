@@ -1,0 +1,1 @@
+ALTER TABLE "bookings" ALTER COLUMN "confirmation_number" DROP NOT NULL;

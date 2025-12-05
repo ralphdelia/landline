@@ -15,6 +15,13 @@
       "when": 1764952230378,
       "tag": "0001_round_silhouette",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764966669223,
+      "tag": "0002_careless_turbo",
+      "breakpoints": true
     }
   ]
 }

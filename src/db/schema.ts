@@ -77,9 +77,7 @@ export const users = pgTable("users", {
 
 export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
-  confirmationNumber: varchar("confirmation_number", { length: 50 })
-    .notNull()
-    .unique(),
+  confirmationNumber: varchar("confirmation_number", { length: 50 }).unique(),
   userId: integer("user_id")
     .notNull()
     .references(() => users.id),

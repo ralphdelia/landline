@@ -260,6 +260,6 @@ erDiagram
 
 #### API Routes
 
-`/cron/seat` – Clear expired reservations
-- Removes bookings in reserved status older than one hour
+`api/cron/cleanup-bookings` – Clear expired reservations
+- Removes bookings in reserved status older than half an hour
 - Resets them to open

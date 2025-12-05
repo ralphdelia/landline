@@ -58,6 +58,7 @@ pnpm db:down
 **Fields**
 - id
 - route_id
+- cost
 - date
 - departure_time
 - arrival_time

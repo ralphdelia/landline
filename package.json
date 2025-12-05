@@ -8,10 +8,17 @@
     "start": "next start",
     "lint": "eslint",
     "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "echo '⚠️  Warning: Use db:generate and db:migrate for safety. Direct push bypasses migration history.'",
+    "db:reset": "tsx src/db/reset.ts",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.0",
     "next": "16.0.7",
+    "postgres": "^3.4.7",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
@@ -23,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

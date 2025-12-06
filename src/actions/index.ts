@@ -40,9 +40,7 @@ export async function createBooking(
 
   let booking;
   try {
-    // Execute transaction
     booking = await db.transaction(async (tx) => {
-      // 1. Check if user exists by email, if not create one
       let user = await tx.query.users.findFirst({
         where: eq(users.email, validatedData.email),
       });
@@ -59,7 +57,6 @@ export async function createBooking(
         user = newUser;
       }
 
-      // 2. Get seat IDs and validate they exist and are available
       const seatRecords = await tx
         .select({
           id: seats.id,
@@ -73,7 +70,8 @@ export async function createBooking(
             eq(seats.tripId, tripIdNum),
             inArray(seats.seatNumber, validatedData.seats)
           )
-        );
+        )
+        .for("update"); //locks these rows until transaction completes;
 
       if (seatRecords.length !== validatedData.seats.length) {
         throw new Error("Some selected seats do not exist");
@@ -86,7 +84,6 @@ export async function createBooking(
 
       const seatIds = seatRecords.map((s) => s.id);
 
-      // 4. Get trip cost for calculating total amount
       const trip = await tx.query.trips.findFirst({
         where: eq(trips.id, tripIdNum),
       });
@@ -108,7 +105,6 @@ export async function createBooking(
         })
         .returning();
 
-      // 7. Link all selected seats to the booking
       await tx.insert(bookingSeats).values(
         seatIds.map((seatId) => ({
           bookingId: newBooking.id,
@@ -161,33 +157,34 @@ export async function processPayment(
   let result;
   try {
     result = await db.transaction(async (tx) => {
-      const booking = await tx.query.bookings.findFirst({
-        where: eq(bookings.id, validatedData.bookingId),
-        with: {
-          user: true,
-        },
-      });
+      const booking = await tx
+        .select()
+        .from(bookings)
+        .innerJoin(users, eq(bookings.userId, users.id))
+        .where(eq(bookings.id, validatedData.bookingId))
+        .for("update") // lock rows during transaction
+        .then((b) => b[0]);
 
       if (!booking) {
         throw new Error("Booking not found");
       }
 
-      if (booking.status === "booked") {
+      if (booking.bookings.status === "booked") {
         throw new Error("Booking has already been purchased");
       }
 
-      if (booking.status !== "reserved") {
+      if (booking.bookings.status !== "reserved") {
         throw new Error("Booking is not in reserved status");
       }
 
-      if (booking.reservedUntil && new Date() > booking.reservedUntil) {
+      if (
+        booking.bookings.reservedUntil &&
+        new Date() > booking.bookings.reservedUntil
+      ) {
         throw new Error("Reservation has expired");
       }
 
-      {
-        /* Process payment */
-      }
-
+      /* MOCK Process payment */
       const confirmationNumber = generateConfirmationNumber();
 
       await tx
@@ -207,7 +204,7 @@ export async function processPayment(
           paymentMethodType: validatedData.paymentMethodType,
           paymentMethodLast4: last4,
         })
-        .where(eq(users.id, booking.userId));
+        .where(eq(users.id, booking.bookings.userId));
 
       return { confirmationNumber, tripId: validatedData.tripId };
     });

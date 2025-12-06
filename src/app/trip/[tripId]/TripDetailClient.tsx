@@ -1,25 +1,20 @@
 "use client";
 
-import React, { use } from "react";
+import React from "react";
 import { useActionState } from "react";
 import { Button } from "@/components/ui";
 import type { getTripById } from "@/data";
-import { notFound } from "next/navigation";
 import { createBooking } from "@/actions";
 
 type TripDetailClientProps = {
-  tripPromise: NonNullable<ReturnType<typeof getTripById>>;
+  trip: NonNullable<Awaited<ReturnType<typeof getTripById>>>;
 };
 const COLS_PER_ROW = 4;
 
-export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
-  const trip = use(tripPromise);
-
+export function TripDetailClient({ trip }: TripDetailClientProps) {
   const [state, formAction, isPending] = useActionState(createBooking, {
     errors: [],
   });
-
-  if (!trip) return notFound();
 
   return (
     <div className="">

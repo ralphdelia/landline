@@ -13,8 +13,10 @@ type Props = {
 };
 
 export default async function Home({ searchParams }: Props) {
-  const origins = await getOriginsWithDestinations();
-  const params = await searchParams;
+  const [origins, params] = await Promise.all([
+    getOriginsWithDestinations(),
+    searchParams,
+  ]);
 
   const parsedSearchParams = tripSearchSchema.safeParse(params);
   let searchResultsPromise;

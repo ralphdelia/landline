@@ -196,7 +196,7 @@ Bookings are modeled to have a `booking_status` as a PostgreSQL enum: `reserved`
 
 #### API Routes
 
-`api/cron/cleanup-bookings` – Clear expired reservations (set to 30 min)
+`api/cron/cleanup-bookings` – Clear expired reservations (set to 30 min)
 
 - Removes bookings in reserved status older than half an hour
 - Resets them to open
@@ -239,3 +239,4 @@ On the `/trip/[tripId]` page, users enter information and select their seat. Thi
 If payment is attempted after expiration, the server action produces an error indicating the reservation has expired. To release seats, a cron job at `/api/cron/cleanup-bookings` queries the database for expired reserved bookings and removes them to free the seats.
 
 With deployment on Vercel, setting up cron jobs is straightforward. The cron job is an API route protected by an environment variable key and configured to run via the `vercel.json` file in the project root.
+- Note: I am using the Vercel Free Plan with executions per day I have it set to once daily.

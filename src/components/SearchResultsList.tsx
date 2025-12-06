@@ -18,7 +18,8 @@ export async function SearchResultsList({ searchResultPromise }: Props) {
       <div className="mt-8">
         <h2 className="mb-4 text-xl font-semibold">Search Results</h2>
         <p className="text-gray-600">
-          No trips found for the selected route and date.
+          No trips found for the selected route and date. Seed data has been
+          provided for trips scheduled between December 6 and January 6.
         </p>
       </div>
     );

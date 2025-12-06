@@ -65,6 +65,9 @@ export function TripDetailClient({ trip }: TripDetailClientProps) {
                               type="checkbox"
                               name="seats"
                               value={rowSeats[0].seatNumber}
+                              defaultChecked={state.data?.seats?.includes(
+                                rowSeats[0].seatNumber
+                              )}
                               disabled={!rowSeats[0].isAvailable || isPending}
                               className="h-5 w-5 cursor-pointer accent-stone-600 disabled:cursor-not-allowed disabled:opacity-50"
                             />
@@ -81,6 +84,9 @@ export function TripDetailClient({ trip }: TripDetailClientProps) {
                               type="checkbox"
                               name="seats"
                               value={rowSeats[1].seatNumber}
+                              defaultChecked={state.data?.seats?.includes(
+                                rowSeats[1].seatNumber
+                              )}
                               disabled={!rowSeats[1].isAvailable || isPending}
                               className="h-5 w-5 cursor-pointer accent-stone-600 disabled:cursor-not-allowed disabled:opacity-50"
                             />
@@ -100,6 +106,9 @@ export function TripDetailClient({ trip }: TripDetailClientProps) {
                               type="checkbox"
                               name="seats"
                               value={rowSeats[2].seatNumber}
+                              defaultChecked={state.data?.seats?.includes(
+                                rowSeats[2].seatNumber
+                              )}
                               disabled={!rowSeats[2].isAvailable || isPending}
                               className="h-5 w-5 cursor-pointer accent-stone-600 disabled:cursor-not-allowed disabled:opacity-50"
                             />
@@ -116,6 +125,9 @@ export function TripDetailClient({ trip }: TripDetailClientProps) {
                               type="checkbox"
                               name="seats"
                               value={rowSeats[3].seatNumber}
+                              defaultChecked={state.data?.seats?.includes(
+                                rowSeats[3].seatNumber
+                              )}
                               disabled={!rowSeats[3].isAvailable || isPending}
                               className="h-5 w-5 cursor-pointer accent-stone-600 disabled:cursor-not-allowed disabled:opacity-50"
                             />
@@ -157,6 +169,7 @@ export function TripDetailClient({ trip }: TripDetailClientProps) {
                 id="name"
                 name="name"
                 type="text"
+                defaultValue={state.data?.name || ""}
                 disabled={isPending}
                 className={`w-full rounded-md border bg-stone-50 px-3 py-2 disabled:opacity-50 ${
                   state.properties?.name ? "border-red-500" : "border-gray-300"
@@ -179,6 +192,7 @@ export function TripDetailClient({ trip }: TripDetailClientProps) {
                 id="email"
                 name="email"
                 type="email"
+                defaultValue={state.data?.email || ""}
                 disabled={isPending}
                 className={`w-full rounded-md border bg-stone-50 px-3 py-2 disabled:opacity-50 ${
                   state.properties?.email ? "border-red-500" : "border-gray-300"
@@ -204,6 +218,7 @@ export function TripDetailClient({ trip }: TripDetailClientProps) {
                 id="dateOfBirth"
                 name="dateOfBirth"
                 type="date"
+                defaultValue={state.data?.dateOfBirth || ""}
                 disabled={isPending}
                 className={`w-full rounded-md border bg-stone-50 px-3 py-2 disabled:opacity-50 ${
                   state.properties?.dateOfBirth

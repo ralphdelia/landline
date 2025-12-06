@@ -8,9 +8,26 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { generateConfirmationNumber } from "@/app/utils";
 
-type FormActionState = {
+type FormActionState<TData = undefined> = {
   errors: string[];
   properties?: Record<string, { errors: string[] }>;
+  data?: TData;
+};
+
+type BookingFormData = {
+  seats: string[];
+  name: string;
+  email: string;
+  dateOfBirth: string;
+};
+
+type PaymentFormData = {
+  cardholderName: string;
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
+  billingAddress: string;
+  paymentMethodType: string;
 };
 
 class BookingTransactionError extends Error {
@@ -28,9 +45,9 @@ class PaymentTransactionError extends Error {
 }
 
 export async function createBooking(
-  _prevState: FormActionState,
+  _prevState: FormActionState<BookingFormData>,
   formData: FormData
-) {
+): Promise<FormActionState<BookingFormData>> {
   const rawData = {
     seats: formData.getAll("seats") as string[],
     name: formData.get("name") as string,
@@ -47,7 +64,10 @@ export async function createBooking(
   const validation = bookingFormSchema.safeParse(rawData);
 
   if (!validation.success) {
-    return z.treeifyError(validation.error);
+    return {
+      ...z.treeifyError(validation.error),
+      data: rawData,
+    };
   }
 
   const validatedData = validation.data;
@@ -143,6 +163,7 @@ export async function createBooking(
           ? error.message
           : "Failed to create booking",
       ],
+      data: rawData,
     };
   }
 
@@ -151,22 +172,29 @@ export async function createBooking(
 }
 
 export async function processPayment(
-  _prevState: FormActionState,
+  _prevState: FormActionState<PaymentFormData>,
   formData: FormData
-) {
-  const validation = paymentFormSchema.safeParse({
-    bookingId: formData.get("bookingId"),
+): Promise<FormActionState<PaymentFormData>> {
+  const rawData = {
     cardholderName: formData.get("cardholderName") as string,
     cardNumber: formData.get("cardNumber") as string,
     expiryDate: formData.get("expiryDate") as string,
     cvv: formData.get("cvv") as string,
     billingAddress: formData.get("billingAddress") as string,
     paymentMethodType: formData.get("paymentMethodType") as string,
+  };
+
+  const validation = paymentFormSchema.safeParse({
+    bookingId: formData.get("bookingId"),
+    ...rawData,
     tripId: formData.get("tripId"),
   });
 
   if (!validation.success) {
-    return z.treeifyError(validation.error);
+    return {
+      ...z.treeifyError(validation.error),
+      data: rawData,
+    };
   }
 
   const validatedData = validation.data;
@@ -174,6 +202,7 @@ export async function processPayment(
   if (!validatedData.tripId) {
     return {
       errors: ["Invalid trip ID"],
+      data: rawData,
     };
   }
 
@@ -234,6 +263,7 @@ export async function processPayment(
           ? error.message
           : "Failed to process payment",
       ],
+      data: rawData,
     };
   }
 

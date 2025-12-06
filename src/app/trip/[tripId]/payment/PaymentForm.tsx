@@ -46,6 +46,7 @@ export function PaymentForm({ bookingId, tripId, amount }: PaymentFormProps) {
               id="cardholderName"
               name="cardholderName"
               type="text"
+              defaultValue={state.data?.cardholderName || ""}
               required
               disabled={isPending}
               className="w-full rounded-md border border-stone-300 bg-stone-50 px-3 py-2 disabled:opacity-50"
@@ -68,6 +69,7 @@ export function PaymentForm({ bookingId, tripId, amount }: PaymentFormProps) {
               id="cardNumber"
               name="cardNumber"
               type="text"
+              defaultValue={state.data?.cardNumber || ""}
               required
               placeholder="1234 5678 9012 3456"
               maxLength={19}
@@ -93,6 +95,7 @@ export function PaymentForm({ bookingId, tripId, amount }: PaymentFormProps) {
                 id="expiryDate"
                 name="expiryDate"
                 type="text"
+                defaultValue={state.data?.expiryDate || ""}
                 required
                 placeholder="MM/YY"
                 maxLength={5}
@@ -114,6 +117,7 @@ export function PaymentForm({ bookingId, tripId, amount }: PaymentFormProps) {
                 id="cvv"
                 name="cvv"
                 type="text"
+                defaultValue={state.data?.cvv || ""}
                 required
                 placeholder="123"
                 maxLength={4}
@@ -139,6 +143,7 @@ export function PaymentForm({ bookingId, tripId, amount }: PaymentFormProps) {
               id="billingAddress"
               name="billingAddress"
               type="text"
+              defaultValue={state.data?.billingAddress || ""}
               required
               disabled={isPending}
               className="w-full rounded-md border border-stone-300 bg-stone-50 px-3 py-2 disabled:opacity-50"
@@ -160,6 +165,7 @@ export function PaymentForm({ bookingId, tripId, amount }: PaymentFormProps) {
             <select
               id="paymentMethodType"
               name="paymentMethodType"
+              defaultValue={state.data?.paymentMethodType || ""}
               required
               disabled={isPending}
               className="w-full rounded-md border border-stone-300 bg-stone-50 px-3 py-2 disabled:opacity-50"

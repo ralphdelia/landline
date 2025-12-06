@@ -134,7 +134,7 @@ export function TripDetailClient({ tripPromise }: TripDetailClientProps) {
                   }
                 )}
               </div>
-              <div className="mt-0.5 h-4">
+              <div className="mt-2 h-4 text-center">
                 {state.properties?.seats?.errors?.[0] && (
                   <p className="text-xs text-red-500">
                     {state.properties.seats.errors[0]}

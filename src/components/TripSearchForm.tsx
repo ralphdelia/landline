@@ -11,13 +11,18 @@ import { Button } from "@/components/ui";
 
 type Props = {
   origins: OriginWithDestinations[];
+  initialValues?: {
+    from?: string;
+    to?: string;
+    date?: string;
+  };
 };
 
-export function TripSearchForm({ origins }: Props) {
+export function TripSearchForm({ origins, initialValues }: Props) {
   const router = useRouter();
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [date, setDate] = useState("");
+  const [from, setFrom] = useState(initialValues?.from || "");
+  const [to, setTo] = useState(initialValues?.to || "");
+  const [date, setDate] = useState(initialValues?.date || "");
   const [errors, setErrors] = useState<
     Partial<Record<keyof TripSearchFormData, string>>
   >({});
@@ -49,14 +54,6 @@ export function TripSearchForm({ origins }: Props) {
     });
 
     router.push(`/?${params.toString()}`);
-  };
-
-  const handleClear = () => {
-    setFrom("");
-    setTo("");
-    setDate("");
-    setErrors({});
-    router.push("/");
   };
 
   return (
@@ -159,7 +156,7 @@ export function TripSearchForm({ origins }: Props) {
         </div>
       </div>
       <div className="flex-1 align-bottom">
-        <Button className="mt-2 w-full" type="submit">
+        <Button className="mt-2 w-full font-medium" type="submit">
           Search Trips
         </Button>
       </div>

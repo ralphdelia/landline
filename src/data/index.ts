@@ -216,7 +216,9 @@ export async function getBookingDetails(tripId: number, bookingId: number) {
       userName: users.name,
       userEmail: users.email,
       // Aggregated seats
-      seatNumbers: sql<string[]>`array_agg(${seats.seatNumber} ORDER BY SUBSTRING(${seats.seatNumber}, 1, 1), CAST(SUBSTRING(${seats.seatNumber}, 2) AS INTEGER))`,
+      seatNumbers: sql<
+        string[]
+      >`array_agg(${seats.seatNumber} ORDER BY SUBSTRING(${seats.seatNumber}, 1, 1), CAST(SUBSTRING(${seats.seatNumber}, 2) AS INTEGER))`,
     })
     .from(bookings)
     .innerJoin(users, eq(bookings.userId, users.id))

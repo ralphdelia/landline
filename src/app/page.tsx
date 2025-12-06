@@ -30,11 +30,30 @@ export default async function Home({ searchParams }: Props) {
   return (
     <section className="w-full overflow-hidden">
       <h1 className="mb-4 text-2xl font-bold">Search for a Trip</h1>
-      <TripSearchForm origins={origins} />
+      <TripSearchForm origins={origins} initialValues={params} />
 
-      <Suspense fallback={<div className="mt-8">Loading results...</div>}>
+      <Suspense fallback={<SearchResultsLoading />}>
         <SearchResultsList searchResultPromise={searchResultsPromise} />
       </Suspense>
     </section>
+  );
+}
+
+function SearchResultsLoading() {
+  return (
+    <div className="mt-8 animate-pulse">
+      <section className="py-4">
+        <div className="mb-2 h-7 w-64 rounded bg-stone-300" />
+        <div className="h-5 w-48 rounded bg-stone-300" />
+      </section>
+
+      <ul className="space-y-1">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <li key={i} className="rounded-lg p-2">
+            <div className="h-[52px] rounded bg-stone-300 pt-1"></div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

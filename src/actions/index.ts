@@ -13,6 +13,20 @@ type FormActionState = {
   properties?: Record<string, { errors: string[] }>;
 };
 
+class BookingTransactionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BookingTransactionError";
+  }
+}
+
+class PaymentTransactionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PaymentTransactionError";
+  }
+}
+
 export async function createBooking(
   _prevState: FormActionState,
   formData: FormData
@@ -61,35 +75,42 @@ export async function createBooking(
         .select({
           id: seats.id,
           seatNumber: seats.seatNumber,
-          bookingId: bookingSeats.bookingId,
         })
         .from(seats)
-        .leftJoin(bookingSeats, eq(seats.id, bookingSeats.seatId))
         .where(
           and(
             eq(seats.tripId, tripIdNum),
             inArray(seats.seatNumber, validatedData.seats)
           )
         )
-        .for("update"); //locks these rows until transaction completes;
+        .for("update"); //locks these rows until transaction completes
 
       if (seatRecords.length !== validatedData.seats.length) {
-        throw new Error("Some selected seats do not exist");
+        throw new BookingTransactionError("Some selected seats do not exist");
       }
 
-      const bookedSeat = seatRecords.find((s) => s.bookingId !== null);
-      if (bookedSeat) {
-        throw new Error("One or more seats are already booked");
-      }
-
+      // Then check if any are already booked
       const seatIds = seatRecords.map((s) => s.id);
+      const bookedSeatsCheck = await tx
+        .select({
+          seatId: bookingSeats.seatId,
+          bookingId: bookingSeats.bookingId,
+        })
+        .from(bookingSeats)
+        .where(inArray(bookingSeats.seatId, seatIds));
+
+      if (bookedSeatsCheck.length > 0) {
+        throw new BookingTransactionError(
+          "One or more seats are already booked"
+        );
+      }
 
       const trip = await tx.query.trips.findFirst({
         where: eq(trips.id, tripIdNum),
       });
 
       if (!trip) {
-        throw new Error("Trip not found");
+        throw new BookingTransactionError("Trip not found");
       }
 
       const totalAmount = Number(trip.cost) * validatedData.seats.length;
@@ -118,7 +139,9 @@ export async function createBooking(
     console.error("Booking error:", error);
     return {
       errors: [
-        error instanceof Error ? error.message : "Failed to create booking",
+        error instanceof BookingTransactionError
+          ? error.message
+          : "Failed to create booking",
       ],
     };
   }
@@ -157,31 +180,26 @@ export async function processPayment(
   let result;
   try {
     result = await db.transaction(async (tx) => {
-      const booking = await tx
+      const [booking] = await tx
         .select()
         .from(bookings)
-        .innerJoin(users, eq(bookings.userId, users.id))
         .where(eq(bookings.id, validatedData.bookingId))
-        .for("update") // lock rows during transaction
-        .then((b) => b[0]);
+        .for("update"); // lock booking row during transaction
 
       if (!booking) {
-        throw new Error("Booking not found");
+        throw new PaymentTransactionError("Booking not found");
       }
 
-      if (booking.bookings.status === "booked") {
-        throw new Error("Booking has already been purchased");
+      if (booking.status === "booked") {
+        throw new PaymentTransactionError("Booking has already been purchased");
       }
 
-      if (booking.bookings.status !== "reserved") {
-        throw new Error("Booking is not in reserved status");
+      if (booking.status !== "reserved") {
+        throw new PaymentTransactionError("Booking is not in reserved status");
       }
 
-      if (
-        booking.bookings.reservedUntil &&
-        new Date() > booking.bookings.reservedUntil
-      ) {
-        throw new Error("Reservation has expired");
+      if (booking.reservedUntil && new Date() > booking.reservedUntil) {
+        throw new PaymentTransactionError("Reservation has expired");
       }
 
       /* MOCK Process payment */
@@ -204,7 +222,7 @@ export async function processPayment(
           paymentMethodType: validatedData.paymentMethodType,
           paymentMethodLast4: last4,
         })
-        .where(eq(users.id, booking.bookings.userId));
+        .where(eq(users.id, booking.userId));
 
       return { confirmationNumber, tripId: validatedData.tripId };
     });
@@ -212,7 +230,9 @@ export async function processPayment(
     console.error("Payment error:", error);
     return {
       errors: [
-        error instanceof Error ? error.message : "Failed to process payment",
+        error instanceof PaymentTransactionError
+          ? error.message
+          : "Failed to process payment",
       ],
     };
   }

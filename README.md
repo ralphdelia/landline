@@ -209,7 +209,7 @@ In the search page or wherever search data is pulled, availability is determined
 
 In the UI, if you go to `/trip/[tripId]` and click through to purchase, you will reserve that seat, then if you navigate back to the same page, you will see that that check box is disabled.
 
-In this project, I use Next.js and leverage React Server Components. My approach involves having a server component start a database query without awaiting the promised result. Instead, it sends the promise across a Suspense boundary to a component, which then retrieves the data using the React `use` hook. In reality, what this does is it allows the server to respond with the static content immediately while the promised data/component is streamed as it becomes available. This reduces page load times by sending content immediately, even if the main data fetching function has not returned.
+On the root search page (`src/app/page.tsx`), I leverage Next.js and React Server Components to implement progressive streaming. The server component initiates the database query for search results without awaiting the promise. Instead, it passes the unresolved promise across a Suspense boundary to the `SearchResultsList` component, which then awaits the data. This allows the server to respond with static content (the search form, heading, and loading skeleton) immediately, while the search results are streamed as they become available. This reduces perceived page load times by delivering content progressively, even before the main data fetching function completes.
 
 ### Submit Bookings
 
@@ -239,4 +239,5 @@ On the `/trip/[tripId]` page, users enter information and select their seat. Thi
 If payment is attempted after expiration, the server action produces an error indicating the reservation has expired. To release seats, a cron job at `/api/cron/cleanup-bookings` queries the database for expired reserved bookings and removes them to free the seats.
 
 With deployment on Vercel, setting up cron jobs is straightforward. The cron job is an API route protected by an environment variable key and configured to run via the `vercel.json` file in the project root.
-- Note: I am using the Vercel Free Plan with executions per day I have it set to once daily.
+
+- Note: The demo application is using the Vercel Free Plan with limited cron executions per day. Due to this I have the cron set set to once daily.
